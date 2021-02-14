@@ -29,7 +29,7 @@ jobs:
         mkdir kernel-build-standalone
         cd kernel-build-standalone
         repo init -u https://github.com/flawedworld/platform_manifest.git -b 11 ## Can add logic here to change based on tag
-        repo sync -j32
+        repo sync -j32 --depth=1
       
     - name: Compile the kernel
       working-directory: ${{github.workspace}}/kernel-build-standalone
