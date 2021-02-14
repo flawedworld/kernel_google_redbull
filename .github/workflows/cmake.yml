@@ -1,0 +1,47 @@
+name: Reproducible Building Check
+
+on: [push]
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  Reproducible Building Check:
+  runs-on: ubuntu-20.04
+
+    steps:
+    - name: Setup the repo tool
+      run: |
+        mkdir ~/bin
+        PATH=~/bin:$PATH
+        curl https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
+        chmod a+x ~/bin/repo
+        gpg --recv-key 8BB9AD793E8E6153AF0F9A4416530D5E920F5C65
+        curl https://storage.googleapis.com/git-repo-downloads/repo.asc | gpg --verify - ~/bin/repo
+        git config --global user.name "grapheneos-kernel-build"
+        git config --global user.email "noreply@grapheneos.org"
+
+    - name: Sync minimal sources to build the kernel
+      run: |
+        mkdir kernel-build-standalone
+        cd kernel-build-standalone
+        repo init -u https://github.com/flawedworld/platform_manifest.git -b 11 ## Can add logic here to change based on tag
+        repo sync -j32
+      
+    - name: Compile the kernel
+      working-directory: ${{github.workspace}}/kernel-build-standalone
+      run: |
+        cd kernel/google/redbull
+        mkdir device/google/redfin-kernel
+        git submodule sync
+        git submodule update --init --recursive
+        ./build.sh redfin
+
+    - name: Test
+      working-directory: ${{github.workspace}}/build
+      run: |
+        sha256sum out/arch/arm64/boot/dtbo.img
+        sha256sum out/arch/arm64/boot/Image.lz4
+        sha256sum out/arch/arm64/boot/dts/google/qcom-base/lito.dtb
+       
