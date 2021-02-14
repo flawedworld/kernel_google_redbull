@@ -14,7 +14,7 @@ jobs:
     - name: Setup the repo tool
       run: |
         mkdir ~/bin
-        PATH=~/bin:$PATH
+        echo "~/bin" >> $GITHUB_PATH
         curl https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
         chmod a+x ~/bin/repo
         gpg --recv-key 8BB9AD793E8E6153AF0F9A4416530D5E920F5C65
@@ -38,7 +38,7 @@ jobs:
         git submodule update --init --recursive
         ./build.sh redfin
 
-    - name: Test
+    - name: Generate SHA256 hashes of files and upload them
       working-directory: ${{github.workspace}}/build
       run: |
         sha256sum out/arch/arm64/boot/dtbo.img
