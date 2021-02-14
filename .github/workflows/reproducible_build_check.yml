@@ -1,6 +1,9 @@
 name: Reproducible Building Check
 
-on: [push]
+on:
+  create:
+    tags:
+      - '*'
 
 defaults:
   run:
@@ -41,9 +44,28 @@ jobs:
         ./build.sh redfin
 
     - name: Generate SHA256 hashes of files and upload them
+      id: get_sha256
       working-directory: ${{github.workspace}}/kernel-build-standalone/kernel/google/redbull
       run: |
-        sha256sum out/arch/arm64/boot/dtbo.img
-        sha256sum out/arch/arm64/boot/Image.lz4
-        sha256sum out/arch/arm64/boot/dts/google/qcom-base/lito.dtb
+        echo "::set-output name=SHA256SUM1::$(sha256sum out/arch/arm64/boot/dtbo.img | awk '{ print $1 }')"
+        echo "::set-output name=SHA256SUM2::$(sha256sum out/arch/arm64/boot/Image.lz4 | awk '{ print $1 }')"
+        echo "::set-output name=SHA256SUM3::$(sha256sum out/arch/arm64/boot/dts/google/qcom-base/lito.dtb | awk '{ print $1 }')"
        
+    - name: Get the tag which has been built
+      id: get_tag
+      run: echo ::set-output name=TAGNAME::${GITHUB_REF/refs\/tags\//}
+      
+    - name: Publish SHA256 hashes
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ steps.get_tag.outputs.TAGNAME }}
+        release_name: ${{ steps.get_tag.outputs.TAGNAME }}
+        body: |
+          SHA256 checksums for outputs are as follows:
+          out/arch/arm64/boot/dtbo.img = ${{ steps.get_sha256.outputs.SHA256SUM1 }}
+          out/arch/arm64/boot/Image.lz4 = ${{ steps.get_sha256.outputs.SHA256SUM2 }}
+          out/arch/arm64/boot/dts/google/qcom-base/lito.dtb = ${{ steps.get_sha256.outputs.SHA256SUM3 }}
+        draft: false
+        prerelease: false
