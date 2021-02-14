@@ -34,7 +34,7 @@ jobs:
     - name: Compile the kernel
       working-directory: ${{github.workspace}}/kernel-build-standalone
       run: |
-        mkdir device/google/redfin-kernel
+        mkdir -p device/google/redfin-kernel
         cd kernel/google/redbull
         git submodule sync
         git submodule update --init --recursive
