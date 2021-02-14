@@ -21,8 +21,10 @@ jobs:
         ##curl https://storage.googleapis.com/git-repo-downloads/repo.asc | gpg --verify - ~/bin/repo
         git config --global user.name "grapheneos-kernel-build"
         git config --global user.email "noreply@grapheneos.org"
+        git config --global color.ui false
 
     - name: Sync minimal sources to build the kernel
+      working-directory: ${{github.workspace}}
       run: |
         mkdir kernel-build-standalone
         cd kernel-build-standalone
@@ -32,14 +34,14 @@ jobs:
     - name: Compile the kernel
       working-directory: ${{github.workspace}}/kernel-build-standalone
       run: |
-        cd kernel/google/redbull
         mkdir device/google/redfin-kernel
+        cd kernel/google/redbull
         git submodule sync
         git submodule update --init --recursive
         ./build.sh redfin
 
     - name: Generate SHA256 hashes of files and upload them
-      working-directory: ${{github.workspace}}/build
+      working-directory: ${{github.workspace}}/kernel-build-standalone/kernel/google/redbull
       run: |
         sha256sum out/arch/arm64/boot/dtbo.img
         sha256sum out/arch/arm64/boot/Image.lz4
